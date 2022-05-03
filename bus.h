@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <array>
+
 #include "cpu6502.h"
 
 class bus
@@ -11,7 +12,7 @@ public:
 	~bus();
 
 public:
-	cpu6502 cpu;
+	_6502 cpu;
 	std::array<uint8_t, 64 * 1024> ram{};
 
 public:

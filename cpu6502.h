@@ -2,17 +2,31 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
+
+#define LO_BYTE_MASK	0x00FF
+#define HI_BYTE_MASK	0xFF00
+
+#define SIGBIT_MASK_8	0x80
+#define SIGBIT_MASK_16	0x0080
+
+#define ZERO_8			0x00
+#define ZERO_16			0x0000
+
+#define STACK_BASE		0x0100
+#define STACK_RESET		0xFD;
+#define RESET_ADDRESS	0xFFFC
 
 typedef uint8_t		reg8;
 typedef uint16_t	reg16;
 
 class bus;
 
-class cpu6502
+class _6502
 {
 public:
-	cpu6502();
-	~cpu6502();
+	_6502();
+	~_6502();
 
 public:
 	enum FLAG6502
@@ -27,16 +41,11 @@ public:
 		N = (1 << 7),
 	};
 
-	reg8 a, x, y = 0x00;
-	reg8 sp = 0x00;
-	reg16 pc = 0x0000;
-	reg8 status = 0x00;
-
 	void ConnectBus(bus* bus) { this->bus = bus; }
 
 	// Addressing modes
 	uint8_t IMP();	uint8_t IMM();
-	uint8_t ZP0();	uint8_t ZPX();
+	uint8_t ZPG();	uint8_t ZPX();
 	uint8_t ZPY();	uint8_t REL();
 	uint8_t ABS();	uint8_t ABX();
 	uint8_t ABY();	uint8_t IND();
@@ -73,10 +82,18 @@ public:
 	uint8_t opcode = 0x00;
 	uint8_t cycles = 0;
 
+	reg8 a, x, y = 0x00;
+	reg8 sp = 0x00;
+	reg16 pc = 0x0000;
+	reg8 status = 0x00;
+
 private:
 	bus* bus = nullptr;
 	void write(uint16_t addr, uint8_t data);
 	uint8_t read(uint16_t addr);
+
+	void stackPush(uint8_t data);
+	uint8_t stackPop();
 
 	uint8_t GetFlag(FLAG6502 f);
 	void	SetFlag(FLAG6502 f, bool v);
@@ -84,8 +101,10 @@ private:
 	struct Inst
 	{
 		std::string name;
-		uint8_t(cpu6502::* opcode)(void) = nullptr;
-		uint8_t(cpu6502::* addrmode)(void) = nullptr;
+		uint8_t(_6502::* opcode)(void) = nullptr;
+		uint8_t(_6502::* addrmode)(void) = nullptr;
 		uint8_t cycles = 0;
 	};
+
+	std::vector<Inst> opLookup;
 };
